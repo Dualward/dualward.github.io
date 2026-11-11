@@ -49,6 +49,7 @@ function showError(box, msgs){
 
 /* ================= header + sync strip ================= */
 function renderHeader(){
+  $(".totals").hidden = !ownerOpen();
   var t = Store.totals();
   $("#hdrIn").textContent  = kg(t.in);
   $("#hdrOut").textContent = kg(t.out);
@@ -82,7 +83,7 @@ function renderSync(s){
 
   // With no Client ID there is nothing to connect to yet, so the button
   // sends the user to Setup where it is explained, rather than vanishing.
-  btn.hidden = false;
+  btn.hidden = (s.status === "off" && !ownerOpen());
   // While it is picking the sign-in back up by itself there is nothing
   // useful to press, so the button waits rather than inviting a second
   // sign-in on top of the first.
@@ -175,8 +176,10 @@ function colourFeedback(){
 
   var s = Store.suggestColour(v);
   if(s && s.exact){
-    hint.textContent = "In stock for " + $("#inQuality").value + ": " +
-                       kg(Store.availableGrams($("#inQuality").value, v)) + " KG";
+    hint.textContent = ownerOpen()
+      ? "In stock for " + $("#inQuality").value + ": " +
+        kg(Store.availableGrams($("#inQuality").value, v)) + " KG"
+      : "Known colour.";
     hint.className = "hint hint-ok";
   }else if(s){
     hint.className = "hint hint-warn";
@@ -216,84 +219,6 @@ function submitInward(ev){
   $("#inColour").focus();
 
   toast("Inward saved — " + kg(grams) + " KG " + quality + " " + colour);
-}
-
-function renderRecentIn(){
-  var t = $("#recentIn"); t.textContent = "";
-  var rows = Store.db().entries.filter(function(e){ return e.type === "IN"; }).slice(-10).reverse();
-
-  t.appendChild(el("thead", {}, [el("tr", {}, [
-    el("th", { text:"Date" }), el("th", { text:"Quality" }), el("th", { text:"Colour" }),
-    el("th", { class:"r", text:"KG" }), el("th", { text:"Supplier" }), el("th", { text:"Actions" })
-  ])]));
-
-  if(!rows.length){
-    t.appendChild(el("tbody", {}, [el("tr", {}, [el("td", { colspan:"6" },
-      [el("div", { class:"empty", text:"No inward entries yet." })])])]));
-    return;
-  }
-  var tb = el("tbody");
-  rows.forEach(function(e){
-    tb.appendChild(el("tr", { class: e.voidedAt ? "voided" : "" }, [
-      el("td", { text:dmy(e.date) }),
-      el("td", {}, [el("span", { class: e.voidedAt ? "strike" : "", text:e.quality })]),
-      el("td", { text:e.colour }),
-      el("td", { class:"r", text:kg(e.grams) }),
-      el("td", { class:"muted", text:e.party || "—" }),
-      el("td", { class:"btn-row" }, e.voidedAt
-        ? [el("span", { class:"chip chip-void", text:"Deleted" })]
-        : [el("button", { class:"btn-danger btn-sm", type:"button", text:"Delete",
-            onclick:function(){ openDeleteEntry(e.id); } })])
-    ]));
-  });
-  t.appendChild(tb);
-}
-
-/* The slips just issued, so one can be reprinted or taken back out
-   without going looking for its lines in History. A slip is the thing
-   the customer was handed, so it is deleted whole. */
-function renderRecentOut(){
-  var t = $("#recentOut"); t.textContent = "";
-  var slips = Store.recentSlips(10);
-
-  t.appendChild(el("thead", {}, [el("tr", {}, [
-    el("th", { text:"Date" }), el("th", { text:"Slip" }), el("th", { text:"Customer" }),
-    el("th", { class:"r", text:"Items" }), el("th", { class:"r", text:"KG" }),
-    el("th", { text:"Actions" })
-  ])]));
-
-  if(!slips.length){
-    t.appendChild(el("tbody", {}, [el("tr", {}, [el("td", { colspan:"6" },
-      [el("div", { class:"empty", text:"No slips issued yet." })])])]));
-    return;
-  }
-
-  var tb = el("tbody");
-  slips.forEach(function(sl){
-    var no = el("td", { class:"num" }, [
-      el("span", { class: sl.voided ? "strike" : "", text: sl.slipNo == null ? "—" : String(sl.slipNo) })
-    ]);
-    if(sl.forced) no.appendChild(el("span", { class:"chip chip-forced", text:"Forced", style:"margin-left:4px" }));
-
-    var act = el("td", { class:"btn-row" }, [
-      el("button", { class:"btn btn-sm", type:"button", text:"Print",
-        onclick:function(){ printSlip(sl.slipId); } })
-    ]);
-    act.appendChild(sl.voided
-      ? el("span", { class:"chip chip-void", text:"Deleted" })
-      : el("button", { class:"btn-danger btn-sm", type:"button", text:"Delete",
-          onclick:function(){ openDeleteSlip(sl.slipId); } }));
-
-    tb.appendChild(el("tr", { class: sl.voided ? "voided" : "" }, [
-      el("td", { text: sl.date ? dmy(sl.date) : "—" }),
-      no,
-      el("td", { class:"muted", text:sl.party || "—" }),
-      el("td", { class:"r", text: sl.gone && !sl.voided ? (sl.lines - sl.gone) + " of " + sl.lines : String(sl.lines) }),
-      el("td", { class:"r", text:kg(sl.grams) }),
-      act
-    ]));
-  });
-  t.appendChild(tb);
 }
 
 /* ================= outward ================= */
@@ -970,7 +895,6 @@ function renderFreshPanel(){
 function doStartFresh(){
   var db = Store.db(), n = db.entries.length;
   var keepQ  = $("#freshKeepQ").checked;
-  var keepPw = $("#freshKeepPw").checked;
   var typed = el("input", { placeholder:"START FRESH", autocomplete:"off", autocapitalize:"characters" });
   var go = el("button", { class:"btn-danger", type:"button", text:"Download backup and clear", disabled:"disabled" });
 
@@ -982,7 +906,7 @@ function doStartFresh(){
   go.addEventListener("click", function(){
     if(norm(typed.value) !== "START FRESH") return;
     backup();                                   // the only way back
-    var had = Store.startFresh({ keepQualities:keepQ, keepLock:keepPw });
+    var had = Store.startFresh({ keepQualities:keepQ, keepLock:true });
     closeModal();
     toast(had ? had + " entr" + (had === 1 ? "y" : "ies") + " cleared — the register starts from 1"
               : "The register was already empty");
@@ -996,8 +920,7 @@ function doStartFresh(){
         n + " entr" + (n === 1 ? "y" : "ies") + " will be removed, including the ones already marked " +
         "deleted. Slip numbering goes back to 1." }),
       el("p", { class:"hint", text:
-        (keepQ ? "The quality list stays. " : "The quality list goes back to the standard one. ") +
-        (keepPw ? "The password stays." : "The password is removed.") }),
+        (keepQ ? "The quality list stays." : "The quality list goes back to the standard one.") }),
       drive.configured ? el("p", { class:"hint hint-warn", text:
         "Google Drive: the empty register goes up at the next sync and replaces what is there — " +
         "it will not be merged back in. Any other phone or computer using this register must be " +
@@ -1466,10 +1389,13 @@ function doPrint(node, size){
   window.print();
 }
 
-/* ================= lock =================
-   A deterrent for a shared counter, not security. The password is
-   kept as a hash so it is not sitting in the page as plain text, but
-   anyone who can open the files can still reach the data.          */
+/* ================= owner login =================
+   Stock, Reports, History and Setup open only for the owner. Everyone
+   else gets Inward, Outward and the Login tab. The password hash lives
+   in the register (db.lock) so it follows the register to every device.
+   The unlocked state lasts for this browser session only and ends
+   after a spell of no use. This keeps staff out of the screens; it is
+   not a server login - see README.md. */
 function hashPw(pw){
   var salt = "sunshine-fabrics";
   if(global.crypto && crypto.subtle && global.isSecureContext){
@@ -1484,63 +1410,123 @@ function hashPw(pw){
   return Promise.resolve("fnv:" + h.toString(16));
 }
 
-function tryUnlock(ev){
+
+var OWNER_KEY   = "sunshineFabrics.ownerUntil";
+var OWNER_VIEWS = ["stock", "reports", "history", "setup"];
+var ownerUntil  = 0, lastBump = 0, failCount = 0, waitUntil = 0;
+try{ ownerUntil = Number(sessionStorage.getItem(OWNER_KEY)) || 0; }catch(e){}
+
+function idleMs(){
+  var m = Number(global.SUNSHINE_CONFIG && SUNSHINE_CONFIG.ownerAutoLockMinutes);
+  if(!(m > 0)) m = 10;
+  return m * 60000;
+}
+function setOwnerUntil(t){
+  ownerUntil = t;
+  try{
+    if(t) sessionStorage.setItem(OWNER_KEY, String(t)); else sessionStorage.removeItem(OWNER_KEY);
+  }catch(e){}
+}
+function ownerHashes(){
+  var h = global.SUNSHINE_CONFIG && SUNSHINE_CONFIG.ownerPasswordHashes;
+  return Array.isArray(h) ? h : [];
+}
+function ownerOpen(){ return ownerUntil > Date.now(); }
+
+function renderTabs(){
+  var open = ownerOpen();
+  $$(".tabs button[data-owner]").forEach(function(b){ b.hidden = !open; });
+}
+
+function afterOwnerChange(){ renderTabs(); refreshAll(); }
+
+function lockOwner(){
+  setOwnerUntil(0);
+  closeModal();
+  // nothing of the owner's screens is left sitting in the page
+  ["stockTable","repRows","repParties","repStats","histTable","qualityTable","repCaption","repUndated"]
+    .forEach(function(id){ var n = $("#" + id); if(n) n.textContent = ""; });
+  lastReport = null;
+  if(OWNER_VIEWS.indexOf(currentView) >= 0 || currentView === "login") showView("login");
+  afterOwnerChange();
+}
+
+function renderLogin(){
+  var open = ownerOpen();
+  $("#loginAsk").hidden  = open;
+  $("#loginDone").hidden = !open;
+  $("#loginState").textContent = open ? "Owner logged in" : "Locked";
+  $("#autoMin").textContent = String(Math.round(idleMs() / 60000));
+}
+
+function doLogin(ev){
   ev.preventDefault();
-  hashPw($("#lockPw").value).then(function(got){
-    if(got === Store.db().lock){
-      try{ sessionStorage.setItem("sunshineFabrics.open", "1"); }catch(e){}
-      openApp();
+  var msg = $("#loginMsg");
+  var wait = waitUntil - Date.now();
+  if(wait > 0){
+    msg.textContent = "Too many wrong tries. Wait " + Math.ceil(wait / 1000) + " seconds.";
+    msg.hidden = false;
+    return;
+  }
+  hashPw($("#loginPw").value).then(function(got){
+    if(ownerHashes().indexOf(got) >= 0){
+      failCount = 0;
+      $("#loginPw").value = "";
+      msg.hidden = true;
+      setOwnerUntil(Date.now() + idleMs());
+      afterOwnerChange();
+      showView("stock");
+      toast("Owner logged in");
     }else{
-      $("#lockMsg").textContent = "Wrong password."; $("#lockMsg").hidden = false;
-      $("#lockPw").value = ""; $("#lockPw").focus();
+      failCount++;
+      if(failCount >= 5){
+        failCount = 0;
+        waitUntil = Date.now() + 30000;
+        msg.textContent = "Too many wrong tries. Wait 30 seconds.";
+      }else{
+        msg.textContent = "Wrong password.";
+      }
+      msg.hidden = false;
+      $("#loginPw").value = "";
+      $("#loginPw").focus();
     }
   });
 }
 
-function setPassword(){
-  var a = el("input", { type:"password", autocomplete:"new-password" });
-  var b = el("input", { type:"password", autocomplete:"new-password" });
-  var err = el("div", { class:"hint hint-bad", hidden:"hidden" });
-  openModal([
-    el("div", { class:"panel-head" }, [el("h2", { text:"Set password" })]),
-    el("div", { class:"panel-body" }, [
-      el("label", { text:"New password" }), a,
-      el("div", { style:"height:10px" }),
-      el("label", { text:"Confirm" }), b,
-      err,
-      el("div", { class:"btn-row", style:"margin-top:14px" }, [
-        el("button", { class:"btn-primary", type:"button", text:"Save", onclick:function(){
-          if(a.value.length < 4){ err.textContent = "Use at least 4 characters."; err.hidden = false; return; }
-          if(a.value !== b.value){ err.textContent = "The two entries do not match."; err.hidden = false; return; }
-          hashPw(a.value).then(function(h){
-            Store.setLock(h); closeModal(); renderPwState(); toast("Password set");
-          });
-        }}),
-        el("button", { class:"btn", type:"button", text:"Cancel", onclick:closeModal })
-      ])
-    ])
-  ]);
-  a.focus();
-}
-
-function renderPwState(){
-  $("#pwState").textContent = Store.db().lock
-    ? "A password is set. It is asked for once per browser session."
-    : "No password set — the register opens straight away.";
+/* Locks again after a spell of no use, so a counter left logged in
+   does not stay open all day. */
+function watchOwnerIdle(){
+  ["click", "keydown", "touchstart", "input"].forEach(function(t){
+    document.addEventListener(t, function(){
+      if(!ownerOpen()) return;
+      var n = Date.now();
+      if(n - lastBump < 5000) return;
+      lastBump = n;
+      setOwnerUntil(n + idleMs());
+    }, true);
+  });
+  setInterval(function(){ if(ownerUntil && !ownerOpen()) lockOwner(); }, 10000);
 }
 
 /* ================= views ================= */
+var currentView = "inward";
+
 function showView(name){
+  if(OWNER_VIEWS.indexOf(name) >= 0 && !ownerOpen()) name = "login";
+  currentView = name;
   $$(".view").forEach(function(v){ v.hidden = (v.id !== "view-" + name); });
   $$(".tabs button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.view === name)); });
   if(name === "stock")   renderStock();
   if(name === "reports") renderReports();
   if(name === "history") renderHistory();
-  if(name === "setup"){ renderQualities(); renderSlipPanel(); renderPaperPanel(); renderBackupInfo(); renderStorageInfo(); renderCompactPanel(); renderFreshPanel(); renderPwState(); renderDrivePanel(); }
+  if(name === "login")   renderLogin();
+  if(name === "setup"){ renderQualities(); renderSlipPanel(); renderPaperPanel(); renderBackupInfo(); renderStorageInfo(); renderCompactPanel(); renderFreshPanel(); renderDrivePanel(); }
   if(name === "outward" && !$("#outLines .line")) addLine();
 }
 
 function refreshAll(){
+  renderTabs();
+  if(OWNER_VIEWS.indexOf(currentView) >= 0 && !ownerOpen()) showView("login");
   renderHeader();
   renderSync();
   renderStorageWarning();
@@ -1548,16 +1534,14 @@ function refreshAll(){
   fillQualitySelect($("#inQuality"), true);
   $$("#outLines .lineQ").forEach(function(s){ fillQualitySelect(s, true); });
   $("#outSlipNo").textContent = Store.db().nextSlip;
-  renderRecentIn();
-  renderRecentOut();
+  if(!$("#view-login").hidden)   renderLogin();
   if(!$("#view-stock").hidden)   renderStock();
   if(!$("#view-reports").hidden) renderReports();
   if(!$("#view-history").hidden) renderHistory();
-  if(!$("#view-setup").hidden){ renderQualities(); renderSlipPanel(); renderPaperPanel(); renderBackupInfo(); renderStorageInfo(); renderCompactPanel(); renderFreshPanel(); renderPwState(); renderDrivePanel(); }
+  if(!$("#view-setup").hidden){ renderQualities(); renderSlipPanel(); renderPaperPanel(); renderBackupInfo(); renderStorageInfo(); renderCompactPanel(); renderFreshPanel(); renderDrivePanel(); }
 }
 
 function openApp(){
-  $("#lock").hidden = true;
   $("#app").hidden = false;
   refreshAll();            // which puts up the storage warning if there is one
 }
@@ -1653,13 +1637,8 @@ function init(){
   });
   $("#freshBtn").addEventListener("click", doStartFresh);
 
-  $("#setPw").addEventListener("click", setPassword);
-  $("#clearPw").addEventListener("click", function(){
-    if(!Store.db().lock){ alert("No password is set."); return; }
-    if(confirm("Remove the password? The register will open without asking.")){
-      Store.setLock(null); renderPwState(); toast("Password removed");
-    }
-  });
+  $("#loginAsk").addEventListener("submit", doLogin);
+  $("#ownerLogout").addEventListener("click", function(){ lockOwner(); toast("Logged out"); });
   $("#driveConnect").addEventListener("click", function(){ Drive.connect(); });
   $("#driveSync").addEventListener("click", function(){ Drive.sync(true, false); });
   $("#driveRefresh").addEventListener("click", function(){ Drive.sync(true, true); });
@@ -1667,7 +1646,6 @@ function init(){
     if(confirm("Disconnect Google Drive?\n\nThe register stays on this device.")) Drive.disconnect();
   });
 
-  $("#lockForm").addEventListener("submit", tryUnlock);
   $("#modal").addEventListener("click", function(e){ if(e.target.id === "modal") closeModal(); });
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape" && !$("#modal").hidden) closeModal();
@@ -1678,16 +1656,9 @@ function init(){
   Drive.onState(renderSync);
   Drive.init();
 
-  // Nothing is drawn until the lock is cleared, so the register is not
-  // sitting in the page behind an overlay.
-  var opened = false;
-  try{ opened = sessionStorage.getItem("sunshineFabrics.open") === "1"; }catch(e){}
-  if(Store.db().lock && !opened){
-    $("#lock").hidden = false;
-    $("#lockPw").focus();
-  }else{
-    openApp();
-  }
+  // The owner's screens stay hidden and empty until the owner logs in.
+  openApp();
+  watchOwnerIdle();
 }
 
 if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
@@ -1700,7 +1671,7 @@ global.UI = { showView:showView, refreshAll:refreshAll, printSlip:printSlip,
               printStock:printStock, printSample:printSample, slipData:slipData,
               slipA5:slipA5, slipRoll:slipRoll, doPrint:doPrint,
               paper:paper, setPaper:setPaper,
-              renderRecentOut:renderRecentOut, renderStock:renderStock,
+              renderStock:renderStock,
               openDeleteEntry:openDeleteEntry, openDeleteSlip:openDeleteSlip,
               openDeleteStockLine:openDeleteStockLine, doStartFresh:doStartFresh };
 

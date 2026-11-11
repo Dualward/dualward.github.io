@@ -51,9 +51,8 @@ Three rules the software follows:
    whatever the other one saved before writing, and each tab shows the other's
    entries straight away without a reload.
 
-3. **Delete does not erase.** There is a **Delete** button on the Inward list,
-   on every slip in the Outward list, on every line of Stock and on every row of
-   History. They all do the same thing: the entry stops counting in the figures
+3. **Delete does not erase.** There is a **Delete** button on every line of Stock and on every row of
+   History (both are owner-only screens). They all do the same thing: the entry stops counting in the figures
    the moment it is pressed, and it stays in History marked as deleted. A
    correction deletes the old entry and writes the new one beside it.
 
@@ -81,7 +80,7 @@ begins, or for opening a clean book at a new financial year.
 This is the only place in the software that truly removes entries instead of
 marking them deleted, so it asks for the words START FRESH to be typed and
 **downloads a backup before it does anything**. That file is the only way back.
-Tick boxes decide whether the quality list and the password survive it.
+A tick box decides whether the quality list survives it.
 
 **Deleting the file in Google Drive does not clear anything.** The register
 lives on each device as well, and the first device to sync would simply put it
@@ -324,27 +323,31 @@ slips, and the software knows which book each belongs to.
 
 ---
 
-## The app lock
+## Owner login
 
-Setup → **Set / Change Password**. The password is stored as a hash, not as
-plain text, and the register is not drawn on screen until it is entered.
+Staff use **Inward** and **Outward** only. **Stock, Reports, History and Setup**
+are hidden until the owner logs in on the **Login** tab, and the totals in the
+heading are hidden too. Nothing is listed under Inward or Outward after saving
+(a message confirms each entry), so staff cannot see or delete earlier entries.
 
-**It is a deterrent, not security.** It stops a customer leaning over the
-counter and reading the screen. It does not stop someone with the device and a
-little knowledge, because the register is sitting in that browser's own storage
-either way.
+- **The password is fixed, not set from the screen.** It is kept in
+  `js/config.js` as `ownerPasswordHashes` (the password itself is not written in
+  the files). There is no set-up or change-password screen, so staff cannot
+  create or alter it. To change it, replace both hash values: the first is
+  SHA-256 of `sunshine-fabrics` + the password, the second is the fallback used
+  when the page is opened from a folder instead of over https.
+- **Logging in** unlocks the four screens for this browser session. It locks
+  again after 10 minutes without use (`ownerAutoLockMinutes` in `js/config.js`),
+  or when **Log out** is pressed. Five wrong tries in a row pause logging in
+  for 30 seconds.
+- Staff still see how much of a colour is available while issuing an Outward
+  slip, because the slip cannot be issued without it.
 
-The two things that genuinely protect the figures are different:
-
-1. **The Google account's password and two-step verification**, which is what
-   stands between anyone else and the copy in Drive.
-2. **Physical control of the devices**, which is what stands between anyone else
-   and the copy on each device.
-
-Neither is something this software can do for you. Keeping the numbers from a
-determined person who has one of the devices would need a server login, which
-means a different kind of software. Decide whether that matters before relying
-on this.
+**This keeps staff out of the screens; it is not a server login.** The register
+is still stored in each browser, so someone with technical skill and the device
+could read it. The two things that genuinely protect the figures are the Google
+account's password with two-step verification, and physical control of the
+devices.
 
 ## Printing
 
@@ -401,5 +404,5 @@ Printing happens inside the page itself, so a pop-up blocker cannot stop it.
   state is not on the device. The Backup panel shows how much room is left long
   before it gets that far.
 - **On a phone** the fields are sized so the browser does not zoom the page in
-  every time one is tapped, and all six tabs fit across the screen. Add it to
+  every time one is tapped, and all seven tabs fit across the screen. Add it to
   the home screen and it opens like an app.

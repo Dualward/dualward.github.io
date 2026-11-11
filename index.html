@@ -13,23 +13,6 @@
 
 <body>
 
-<!-- =========================== LOCK =========================== -->
-<div id="lock" hidden>
-  <form class="card" id="lockForm">
-    <div class="brand">
-      <span class="mark">SF</span>
-      <span><span class="brand-name">SUNSHINE FABRICS</span><span class="brand-sub">Stock Register</span></span>
-    </div>
-    <p lang="hi">आगे बढ़ने के लिए Password डालें।</p>
-    <label for="lockPw">Password</label>
-    <input id="lockPw" type="password" autocomplete="current-password">
-    <div id="lockMsg" class="hint hint-bad" hidden></div>
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn-primary" type="submit" style="flex:1">Unlock</button>
-    </div>
-  </form>
-</div>
-
 <!-- =========================== APP =========================== -->
 <div id="app" hidden>
 
@@ -57,10 +40,11 @@
 <nav class="tabs" role="tablist">
   <button role="tab" data-view="inward"  aria-selected="true">Inward</button>
   <button role="tab" data-view="outward" aria-selected="false">Outward</button>
-  <button role="tab" data-view="stock"   aria-selected="false">Stock</button>
-  <button role="tab" data-view="reports" aria-selected="false">Reports</button>
-  <button role="tab" data-view="history" aria-selected="false">History</button>
-  <button role="tab" data-view="setup"   aria-selected="false">Setup</button>
+  <button role="tab" data-view="stock"   data-owner="1" aria-selected="false" hidden>Stock</button>
+  <button role="tab" data-view="reports" data-owner="1" aria-selected="false" hidden>Reports</button>
+  <button role="tab" data-view="history" data-owner="1" aria-selected="false" hidden>History</button>
+  <button role="tab" data-view="setup"   data-owner="1" aria-selected="false" hidden>Setup</button>
+  <button role="tab" data-view="login"   aria-selected="false">Login</button>
 </nav>
 
 <main>
@@ -91,10 +75,6 @@
       </div>
     </form>
 
-    <div class="panel">
-      <div class="panel-head"><h2>Recent Inward</h2><span class="eyebrow spacer">Last 10</span></div>
-      <div class="tablewrap"><table id="recentIn"></table></div>
-    </div>
   </section>
 
   <!-- ---------------- OUTWARD ---------------- -->
@@ -133,10 +113,6 @@
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-head"><h2>Recent Slips</h2><span class="eyebrow spacer">Last 10</span></div>
-      <div class="tablewrap"><table id="recentOut"></table></div>
-    </div>
   </section>
 
   <!-- ---------------- STOCK ---------------- -->
@@ -388,9 +364,6 @@
           <label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:500">
             <input type="checkbox" id="freshKeepQ" style="width:auto" checked> Keep the quality list
           </label>
-          <label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:500">
-            <input type="checkbox" id="freshKeepPw" style="width:auto" checked> Keep the password
-          </label>
         </div>
         <div class="btn-row" style="margin-top:12px">
           <button class="btn-danger" type="button" id="freshBtn">Clear the register</button>
@@ -398,19 +371,36 @@
       </div>
     </div>
 
+  </section>
+
+  <!-- ---------------- LOGIN (owner) ---------------- -->
+  <section class="view" id="view-login" hidden>
     <div class="panel">
-      <div class="panel-head"><h2>App Lock</h2></div>
+      <div class="panel-head"><h2>Owner Login</h2><span class="eyebrow spacer" id="loginState">Locked</span></div>
       <div class="panel-body">
         <p class="hint" style="margin-top:0">
-          A password keeps the register closed on a shared counter. It is stored on this device as a hash,
-          not as plain text. It is a deterrent only &mdash; anyone with the files and some technical skill can
-          still read the data. Real protection needs a server login.
+          Stock, Reports, History and Setup are for the owner only. Inward and Outward stay open
+          for everyone.
         </p>
-        <div class="btn-row">
-          <button class="btn" type="button" id="setPw">Set / Change Password</button>
-          <button class="btn-danger" type="button" id="clearPw">Remove Password</button>
+
+        <form id="loginAsk" hidden>
+          <label for="loginPw">Owner password</label>
+          <input id="loginPw" type="password" autocomplete="current-password">
+          <div id="loginMsg" class="hint hint-bad" hidden></div>
+          <div class="btn-row" style="margin-top:14px">
+            <button class="btn-primary" type="submit">Login</button>
+          </div>
+        </form>
+
+        <div id="loginDone" hidden>
+          <div class="notice notice-ok" style="margin-top:0">
+            <strong>Owner is logged in.</strong> It locks again after
+            <span id="autoMin"></span> minutes without use.
+          </div>
+          <div class="btn-row">
+            <button class="btn-primary" type="button" id="ownerLogout">Log out</button>
+          </div>
         </div>
-        <p class="hint" id="pwState"></p>
       </div>
     </div>
   </section>
