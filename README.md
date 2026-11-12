@@ -1,4 +1,4 @@
-# Sunshine Fabrics — Stock Register
+# Dualward — Stock Register
 
 Inward / outward stock software for fabric quality, colour and quantity.
 It runs entirely in the browser. There is no server to maintain.
@@ -154,7 +154,7 @@ it read anything else in your Drive.
 
 1. Go to <https://console.cloud.google.com/>
 2. Top bar → **Select a project** → **New Project**
-3. Name it `Sunshine Fabrics` → **Create**
+3. Name it `Dualward` → **Create**
 
 ### 2. Switch on the Drive API
 
@@ -165,7 +165,7 @@ it read anything else in your Drive.
 
 1. **APIs & Services** → **OAuth consent screen**
 2. User type **External** → **Create**
-3. App name `Sunshine Fabrics`, your email in both email boxes → **Save and Continue**
+3. App name `Dualward`, your email in both email boxes → **Save and Continue**
 4. **Scopes** → **Add or Remove Scopes** → tick
    `https://www.googleapis.com/auth/drive.file` → **Update** → **Save and Continue**
 5. **Test users** → **Add Users** → add every Google account that will use the

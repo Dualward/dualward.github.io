@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   Sunshine Fabrics - settings you may need to change
+   Dualward - settings you may need to change
 
    googleClientId
      Leave it empty and the software runs entirely on this computer.
@@ -38,7 +38,7 @@
      Reports, History and Setup lock again. Default 10.
 ------------------------------------------------------------------ */
 window.SUNSHINE_CONFIG = {
-  businessName:  "SUNSHINE FABRICS",
+  businessName:  "DUALWARD",
   googleClientId: "280793711310-jdvsbvu0ur7ioqq20fjn8mrsl3m5ffcq.apps.googleusercontent.com",
   driveFileName: "sunshine-fabrics-register.json",
   drivePollSeconds: 60,

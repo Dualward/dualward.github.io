@@ -325,7 +325,7 @@ function createFile(data){
   var meta = {
     name: cfg.driveFileName || "sunshine-fabrics-register.json",
     mimeType: "application/json",
-    description: "Sunshine Fabrics stock register - do not rename or delete."
+    description: "Dualward stock register - do not rename or delete."
   };
   var body =
     "--" + boundary + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" +

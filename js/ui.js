@@ -535,9 +535,9 @@ function reportCsv(){
     return [r.quality, r.colour, kg(r.opening), kg(r.received), kg(r.issued), kg(r.closing)].map(csvCell).join(",");
   });
   body.push(["TOTAL","", kg(s.opening), kg(s.received), kg(s.issued), kg(s.closing)].map(csvCell).join(","));
-  var meta = [["Sunshine Fabrics — Stock Report"].map(csvCell).join(","),
+  var meta = [["Dualward — Stock Report"].map(csvCell).join(","),
               ["Period", periodLabel(s.from, s.to)].map(csvCell).join(","), ""];
-  download("sunshine-fabrics-report-" + (s.from || "start") + "-to-" + (s.to || todayISO()) + ".csv",
+  download("dualward-report-" + (s.from || "start") + "-to-" + (s.to || todayISO()) + ".csv",
            "﻿" + meta.concat([head.map(csvCell).join(",")]).concat(body).join("\r\n"),
            "text/csv;charset=utf-8");
   toast("Report exported");
@@ -561,7 +561,7 @@ function printReport(){
   ]));
 
   doPrint(el("div", { class:"slip" }, [
-    el("h2", { text:(SUNSHINE_CONFIG.businessName || "SUNSHINE FABRICS") }),
+    el("h2", { text:(SUNSHINE_CONFIG.businessName || "DUALWARD") }),
     el("div", { class:"sub", text:"Stock Report — " + periodLabel(s.from, s.to) }),
     el("div", { class:"meta" }, [
       el("span", { text:"Opening: " + kg(s.opening) + " KG" }),
@@ -1111,14 +1111,14 @@ function exportCsv(){
             e.slipNo == null ? "" : e.slipNo,
             e.quality, e.colour, kg(e.grams), e.party, e.remarks].map(csvCell).join(",");
   });
-  download("sunshine-fabrics-register-" + todayISO() + ".csv",
+  download("dualward-register-" + todayISO() + ".csv",
            "﻿" + [head.map(csvCell).join(",")].concat(body).join("\r\n"),
            "text/csv;charset=utf-8");
   toast("Exported " + rows.length + " rows");
 }
 
 function backup(){
-  download("sunshine-fabrics-backup-" + todayISO() + ".json",
+  download("dualward-backup-" + todayISO() + ".json",
            JSON.stringify(Store.snapshot(), null, 2), "application/json");
   Store.markBackedUp();
   renderBackupInfo();
@@ -1131,7 +1131,7 @@ function restore(file){
     var incoming;
     try{ incoming = JSON.parse(fr.result); }
     catch(e){ alert("That file is not a valid backup."); return; }
-    if(!incoming || !Array.isArray(incoming.entries)){ alert("That file is not a Sunshine Fabrics backup."); return; }
+    if(!incoming || !Array.isArray(incoming.entries)){ alert("That file is not a Dualward backup."); return; }
     if(!confirm("Replace the current register with this backup?\n\n" +
                 "Now: " + Store.db().entries.length + " entries\n" +
                 "Backup: " + incoming.entries.length + " entries\n\nThis cannot be undone.")) return;
@@ -1195,7 +1195,7 @@ function printedStamp(){
 }
 
 function shopName(){
-  return (global.SUNSHINE_CONFIG && SUNSHINE_CONFIG.businessName) || "SUNSHINE FABRICS";
+  return (global.SUNSHINE_CONFIG && SUNSHINE_CONFIG.businessName) || "DUALWARD";
 }
 
 /* ---------- one slip, two drawings ---------- */
@@ -1550,7 +1550,7 @@ function openApp(){
 function init(){
   Store.load();
 
-  var name = (global.SUNSHINE_CONFIG && SUNSHINE_CONFIG.businessName) || "SUNSHINE FABRICS";
+  var name = (global.SUNSHINE_CONFIG && SUNSHINE_CONFIG.businessName) || "DUALWARD";
   $$(".brand-name").forEach(function(n){ n.textContent = name; });
   document.title = name + " — Stock Register";
 

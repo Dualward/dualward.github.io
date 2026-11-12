@@ -122,7 +122,7 @@ var listeners = [];
 function emptyDb(){
   return {
     version: 3,
-    businessName: "SUNSHINE FABRICS",
+    businessName: "DUALWARD",
     entries: [],
     qualities: [],
     nextSlip: 1,
